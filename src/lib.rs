@@ -1,48 +1,12 @@
-//! # Mpu6050 sensor driver.
+//! # Async Mpu6050 sensor driver.
 //!
-//! `embedded_hal` based driver with i2c access to MPU6050
+//! `embedded_hal_async` based driver with i2c access to MPU6050
 //!
 //! ### Misc
 //! * [Register sheet](https://www.invensense.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf),
 //! * [Data sheet](https://www.invensense.com/wp-content/uploads/2015/02/MPU-6500-Datasheet2.pdf)
 //!
-//! To use this driver you must provide a concrete `embedded_hal` implementation.
-//! This example uses `linux_embedded_hal`.
-//!
-//! **More Examples** can be found [here](https://github.com/juliangaal/mpu6050/tree/master/examples).
-//! ```no_run
-//! use mpu6050::*;
-//! use linux_embedded_hal::{I2cdev, Delay};
-//! use i2cdev::linux::LinuxI2CError;
-//!
-//! fn main() -> Result<(), Mpu6050Error<LinuxI2CError>> {
-//!     let i2c = I2cdev::new("/dev/i2c-1")
-//!         .map_err(Mpu6050Error::I2c)?;
-//!
-//!     let mut delay = Delay;
-//!     let mut mpu = Mpu6050::new(i2c);
-//!
-//!     mpu.init(&mut delay)?;
-//!
-//!     loop {
-//!         // get roll and pitch estimate
-//!         let acc = mpu.get_acc_angles()?;
-//!         println!("r/p: {:?}", acc);
-//!
-//!         // get sensor temp
-//!         let temp = mpu.get_temp()?;
-//!         printlnasd!("temp: {:?}c", temp);
-//!
-//!         // get gyro data, scaled with sensitivity
-//!         let gyro = mpu.get_gyro()?;
-//!         println!("gyro: {:?}", gyro);
-//!
-//!         // get accelerometer data, scaled with sensitivity
-//!         let acc = mpu.get_acc()?;
-//!         println!("acc: {:?}", acc);
-//!     }
-//! }
-//! ```
+//! To use this driver you must provide a concrete `embedded_hal_async` implementation.
 
 #![no_std]
 

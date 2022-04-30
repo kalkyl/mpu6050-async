@@ -26,7 +26,7 @@ async fn main(_spawner: Spawner, p: Peripherals) {
     loop {
         // get roll and pitch estimate
         let acc = mpu.get_acc_angles().await.unwrap();
-        info!("r/p: {:?}", (acc[0], acc[1], acc[2]));
+        info!("r/p: {:?}", (acc[0], acc[1]));
 
         // get temp
         let temp = mpu.get_temp().await.unwrap();
