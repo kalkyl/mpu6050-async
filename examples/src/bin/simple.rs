@@ -26,7 +26,7 @@ async fn main(_spawner: Spawner, p: Peripherals) {
     loop {
         // get roll and pitch estimate
         let acc = mpu.get_acc_angles().await.unwrap();
-        info!("r/p: {:?}", (acc[0], acc[1]));
+        info!("r/p: {:?}", acc);
 
         // get temp
         let temp = mpu.get_temp().await.unwrap();
@@ -34,11 +34,11 @@ async fn main(_spawner: Spawner, p: Peripherals) {
 
         // get gyro data, scaled with sensitivity
         let gyro = mpu.get_gyro().await.unwrap();
-        info!("gyro: {:?}", (gyro[0], gyro[1], gyro[2]));
+        info!("gyro: {:?}", gyro);
 
         // get accelerometer data, scaled with sensitivity
         let acc = mpu.get_acc().await.unwrap();
-        info!("acc: {:?}", (acc[0], acc[1], acc[2]));
+        info!("acc: {:?}", acc);
 
         Timer::after(Duration::from_millis(100)).await;
     }

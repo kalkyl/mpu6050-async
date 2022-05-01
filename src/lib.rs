@@ -16,7 +16,6 @@ pub mod device;
 use crate::device::*;
 use embedded_hal_async::{delay::DelayUs, i2c::I2c};
 use libm::{atan2f, powf, sqrtf};
-use nalgebra::{Vector2, Vector3};
 
 /// PI, f32
 pub const PI: f32 = core::f32::consts::PI;
@@ -339,12 +338,11 @@ where
     /// Roll and pitch estimation from raw accelerometer readings
     /// NOTE: no yaw! no magnetometer present on MPU6050
     /// https://www.nxp.com/docs/en/application-note/AN3461.pdf equation 28, 29
-    pub async fn get_acc_angles(&mut self) -> Result<Vector2<f32>, Mpu6050Error<E>> {
+    pub async fn get_acc_angles(&mut self) -> Result<(f32, f32), Mpu6050Error<E>> {
         let acc = self.get_acc().await?;
-
-        Ok(Vector2::<f32>::new(
-            atan2f(acc.y, sqrtf(powf(acc.x, 2.) + powf(acc.z, 2.))),
-            atan2f(-acc.x, sqrtf(powf(acc.y, 2.) + powf(acc.z, 2.))),
+        Ok((
+            atan2f(acc.1, sqrtf(powf(acc.0, 2.) + powf(acc.2, 2.))),
+            atan2f(-acc.0, sqrtf(powf(acc.1, 2.) + powf(acc.2, 2.))),
         ))
     }
 
@@ -363,11 +361,10 @@ where
     }
 
     /// Reads rotation (gyro/acc) from specified register
-    async fn read_rot(&mut self, reg: u8) -> Result<Vector3<f32>, Mpu6050Error<E>> {
+    async fn read_rot(&mut self, reg: u8) -> Result<(f32, f32, f32), Mpu6050Error<E>> {
         let mut buf: [u8; 6] = [0; 6];
         self.read_bytes(reg, &mut buf).await?;
-
-        Ok(Vector3::<f32>::new(
+        Ok((
             self.read_word_2c(&buf[0..2]) as f32,
             self.read_word_2c(&buf[2..4]) as f32,
             self.read_word_2c(&buf[4..6]) as f32,
@@ -375,20 +372,21 @@ where
     }
 
     /// Accelerometer readings in g
-    pub async fn get_acc(&mut self) -> Result<Vector3<f32>, Mpu6050Error<E>> {
-        let mut acc = self.read_rot(ACC_REGX_H).await?;
-        acc /= self.acc_sensitivity;
-
-        Ok(acc)
+    pub async fn get_acc(&mut self) -> Result<(f32, f32, f32), Mpu6050Error<E>> {
+        let (mut x, mut y, mut z) = self.read_rot(ACC_REGX_H).await?;
+        x /= self.acc_sensitivity;
+        y /= self.acc_sensitivity;
+        z /= self.acc_sensitivity;
+        Ok((x, y, z))
     }
 
     /// Gyro readings in rad/s
-    pub async fn get_gyro(&mut self) -> Result<Vector3<f32>, Mpu6050Error<E>> {
-        let mut gyro = self.read_rot(GYRO_REGX_H).await?;
-
-        gyro *= PI_180 / self.gyro_sensitivity;
-
-        Ok(gyro)
+    pub async fn get_gyro(&mut self) -> Result<(f32, f32, f32), Mpu6050Error<E>> {
+        let (mut x, mut y, mut z) = self.read_rot(GYRO_REGX_H).await?;
+        x *= PI_180 / self.gyro_sensitivity;
+        y *= PI_180 / self.gyro_sensitivity;
+        z *= PI_180 / self.gyro_sensitivity;
+        Ok((x, y, z))
     }
 
     /// Sensor Temp in degrees celcius
