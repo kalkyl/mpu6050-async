@@ -7,14 +7,13 @@
 use nrf_embassy as _; // global logger + panicking-behavior
 
 use defmt::*;
-use embassy::executor::Spawner;
-use embassy::blocking_mutex::raw::ThreadModeRawMutex;
-use embassy::mutex::Mutex;
-use embassy::util::Forever;
-use embassy::time::{Delay, Duration, Timer};
+use embassy_executor::executor::Spawner;
+use embassy_executor::time::{Delay, Duration, Timer};
+use embassy_util::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_util::{mutex::Mutex, Forever};
 use embassy_nrf::twim::{self, Twim};
 use embassy_nrf::{interrupt, Peripherals, peripherals::TWISPI0};
-use embassy_embedded_hal::shared_bus::i2c::I2cBusDevice;
+use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use mpu6050_async::*;
 use qmc5883l_async::*;
 use core::f32::consts::PI;
@@ -24,8 +23,8 @@ use libm::atan2;
 // readings. See http://www.magnetic-declination.com/
 const DECLINATION_RADS: f32 = 0.024434609;
 
-#[embassy::task]
-async fn compass_task(mut compass: QMC5883L<I2cBusDevice<'static, ThreadModeRawMutex, Twim<'_, TWISPI0>>>) {
+#[embassy_executor::task]
+async fn compass_task(mut compass: QMC5883L<I2cDevice<'static, ThreadModeRawMutex, Twim<'_, TWISPI0>>>) {
     compass.continuous().await.unwrap();
     loop {
         if let Ok((x, y, z)) = compass.mag().await {
@@ -45,8 +44,8 @@ async fn compass_task(mut compass: QMC5883L<I2cBusDevice<'static, ThreadModeRawM
     }
 }
 
-#[embassy::task]
-async fn gyro_task(mut mpu: Mpu6050<I2cBusDevice<'static, ThreadModeRawMutex, Twim<'_, TWISPI0>>>) {
+#[embassy_executor::task]
+async fn gyro_task(mut mpu: Mpu6050<I2cDevice<'static, ThreadModeRawMutex, Twim<'_, TWISPI0>>>) {
     mpu.init(&mut Delay).await.unwrap();
     loop {
         // Get gyro data, scaled with sensitivity
@@ -56,7 +55,7 @@ async fn gyro_task(mut mpu: Mpu6050<I2cBusDevice<'static, ThreadModeRawMutex, Tw
     }
 }
 
-#[embassy::main]
+#[embassy_executor::main]
 async fn main(spawner: Spawner, p: Peripherals) {
     static I2C_BUS: Forever<Mutex::<ThreadModeRawMutex, Twim<TWISPI0>>> = Forever::new();
     let config = twim::Config::default();
@@ -65,11 +64,11 @@ async fn main(spawner: Spawner, p: Peripherals) {
     let i2c_bus = Mutex::<ThreadModeRawMutex, _>::new(i2c);
     let i2c_bus = I2C_BUS.put(i2c_bus);
 
-    let i2c_dev1 = I2cBusDevice::new(i2c_bus);
+    let i2c_dev1 = I2cDevice::new(i2c_bus);
     let compass = QMC5883L::new(i2c_dev1).await.unwrap();
     unwrap!(spawner.spawn(compass_task(compass)));
     
-    let i2c_dev2 = I2cBusDevice::new(i2c_bus);
+    let i2c_dev2 = I2cDevice::new(i2c_bus);
     let mpu = Mpu6050::new(i2c_dev2); 
     unwrap!(spawner.spawn(gyro_task(mpu)));
 }

@@ -8,13 +8,13 @@
 use nrf_embassy as _; // global logger + panicking-behavior
 
 use defmt::*;
-use embassy::executor::Spawner;
-use embassy::time::{Delay, Duration, Timer};
+use embassy_executor::executor::Spawner;
+use embassy_executor::time::{Delay, Duration, Timer};
 use embassy_nrf::twim::{self, Twim};
 use embassy_nrf::{interrupt, Peripherals};
 use mpu6050_async::*;
 
-#[embassy::main]
+#[embassy_executor::main]
 async fn main(_spawner: Spawner, p: Peripherals) {
     let config = twim::Config::default();
     let irq = interrupt::take!(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0);
