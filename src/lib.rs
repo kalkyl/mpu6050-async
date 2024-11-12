@@ -14,7 +14,8 @@ mod bits;
 pub mod device;
 
 use crate::device::*;
-use embedded_hal_async::{delay::DelayUs, i2c::I2c};
+use embedded_hal_async::i2c::I2c;
+use embedded_hal_async::delay::DelayNs;
 use libm::{atan2f, powf, sqrtf};
 
 /// PI, f32
@@ -91,11 +92,11 @@ where
     }
 
     /// Wakes MPU6050 with all sensors enabled (default)
-    async fn wake<D: DelayUs>(&mut self, delay: &mut D) -> Result<(), Mpu6050Error<E>> {
+    async fn wake<D: DelayNs>(&mut self, delay: &mut D) -> Result<(), Mpu6050Error<E>> {
         // MPU6050 has sleep enabled by default -> set bit 0 to wake
         // Set clock source to be PLL with x-axis gyroscope reference, bits 2:0 = 001 (See Register Map )
         self.write_byte(PWR_MGMT_1::ADDR, 0x01).await?;
-        delay.delay_ms(100).await.ok();
+        delay.delay_ms(100).await; // remove .ok()
         Ok(())
     }
 
@@ -132,7 +133,7 @@ where
     }
 
     /// Init wakes MPU6050 and verifies register addr, e.g. in i2c
-    pub async fn init<D: DelayUs>(&mut self, delay: &mut D) -> Result<(), Mpu6050Error<E>> {
+    pub async fn init<D: DelayNs>(&mut self, delay: &mut D) -> Result<(), Mpu6050Error<E>> {
         self.wake(delay).await?;
         self.verify().await?;
         self.set_accel_range(AccelRange::G2).await?;
@@ -251,10 +252,10 @@ where
     }
 
     /// reset device
-    pub async fn reset_device<D: DelayUs>(&mut self, delay: &mut D) -> Result<(), Mpu6050Error<E>> {
+    pub async fn reset_device<D: DelayNs>(&mut self, delay: &mut D) -> Result<(), Mpu6050Error<E>> {
         self.write_bit(PWR_MGMT_1::ADDR, PWR_MGMT_1::DEVICE_RESET, true)
             .await?;
-        delay.delay_ms(100).await.ok();
+        delay.delay_ms(100).await; // remove .ok()
         // Note: Reset sets sleep to true! Section register map: resets PWR_MGMT to 0x40
         Ok(())
     }

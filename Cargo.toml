@@ -1,6 +1,6 @@
 [package]
 name = "mpu6050-async"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Henrik Alsér <henrik.alser@me.com>"]
 edition = "2018"
 
@@ -11,6 +11,6 @@ keywords = ["mpu6050", "imu", "embedded"]
 license = "MIT"
 
 [dependencies]
-embedded-hal = "0.2.3"
-embedded-hal-async = { version = "0.2.0-alpha.0" }
+embedded-hal = "1.0.0"
+embedded-hal-async = { version = "1.0.0" }
 libm = "0.2.1"
